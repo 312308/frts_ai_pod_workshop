@@ -1,0 +1,625 @@
+openapi: 3.0.0
+info:
+  title: TCG Data Ingestion Service (tcg-service) API
+  version: 1.0.0
+  description: |
+    Internal API for FRTS Data Ingestion Layer (tcg-service).
+    Foundation Layer (SP-01 through SP-04) endpoints:
+    - Master data ingestion (wholesale products, etc.)
+    - Conformance validation
+    - Lineage tracking
+    - Watermark management
+
+    Source: BRD §5 FR-019, FR-020, FR-021, FR-022
+    Stories: SP-01 through SP-04 (Foundation Layer)
+
+paths:
+  /api/v1/canonical/wholesale-products:
+    post:
+      summary: Ingest and store wholesale product
+      description: |
+        Intake a validated wholesale product payload and upsert to canonical.wholesale_products table.
+        AC-002a-i (SP-07): Store payload as-is in JSONB, extract Catalogue Item ID as key, record lineage & watermark.
+      operationId: upsertWholesaleProduct
+      tags:
+        - Canonical Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WholesaleProductPayload'
+      responses:
+        '200':
+          description: Wholesale product stored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanonicalStorageResponse'
+        '400':
+          description: Malformed request or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Conflict (idempotency key exists; upsert completed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanonicalStorageResponse'
+      security:
+        - bearerAuth: []
+
+  /api/v1/canonical/retail-products:
+    post:
+      summary: Ingest and store retail product
+      description: |
+        Intake a validated retail product payload and upsert to canonical.retail_products table.
+        AC-001a-e (SP-19): Pattern identical to wholesale products.
+      operationId: upsertRetailProduct
+      tags:
+        - Canonical Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetailProductPayload'
+      responses:
+        '200':
+          description: Retail product stored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanonicalStorageResponse'
+        '400':
+          description: Malformed request or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+      security:
+        - bearerAuth: []
+
+  /api/v1/validation/conformance:
+    post:
+      summary: Validate payload against FOP contract
+      description: |
+        Conformance validation: check JSON Schema, required fields, data types, value constraints.
+        AC-006a-f (SP-02): Validation only; no transformation. Quarantine failures without data loss.
+      operationId: validateConformance
+      tags:
+        - Validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConformanceValidationRequest'
+      responses:
+        '200':
+          description: Payload conforms to contract
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConformanceValidationResponse'
+        '422':
+          description: Validation failure (quarantined; original payload preserved)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConformanceValidationFailure'
+      security:
+        - bearerAuth: []
+
+  /api/v1/lineage:
+    post:
+      summary: Record lineage for ingested record
+      description: |
+        Append-only lineage insert: track record origin (API page + timestamp or file + line + hash).
+        AC-009a-f (SP-04): "Where is my record?" query answered by lineage + OTel trace + Temporal history.
+      operationId: recordLineage
+      tags:
+        - Lineage & Audit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LineageRecord'
+      responses:
+        '201':
+          description: Lineage recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineageResponse'
+        '400':
+          description: Invalid lineage request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+      security:
+        - bearerAuth: []
+    get:
+      summary: Query lineage for record
+      description: |
+        Find lineage record(s) for given entity + key.
+        Returns: API page + timestamp OR file + line + manifest hash.
+      operationId: queryLineage
+      tags:
+        - Lineage & Audit
+      parameters:
+        - name: entity
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Entity type (retail_products, wholesale_products, etc.)
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Business key (product_id, catalogue_item_id, etc.)
+      responses:
+        '200':
+          description: Lineage records found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineageQueryResponse'
+        '404':
+          description: No lineage found for entity+key
+      security:
+        - bearerAuth: []
+
+  /api/v1/watermark:
+    get:
+      summary: Get watermark for entity
+      description: |
+        Retrieve current watermark (last_successful_poll, 7-day guard status).
+        AC-007a (SP-03): Used by workflows to determine delta query window.
+      operationId: getWatermark
+      tags:
+        - Watermark & Guard
+      parameters:
+        - name: entity
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Entity name (retail_products, wholesale_products, etc.)
+      responses:
+        '200':
+          description: Watermark retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatermarkResponse'
+        '404':
+          description: No watermark found for entity
+      security:
+        - bearerAuth: []
+    put:
+      summary: Advance watermark (on successful upsert)
+      description: |
+        Advance watermark only on successful upsert completion.
+        AC-007b-c (SP-03): Failed activities leave watermark unchanged; replay on next run.
+      operationId: advanceWatermark
+      tags:
+        - Watermark & Guard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatermarkAdvanceRequest'
+      responses:
+        '200':
+          description: Watermark advanced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatermarkResponse'
+        '400':
+          description: Invalid watermark advance request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    WholesaleProductPayload:
+      type: object
+      description: |
+        Wholesale Product (Catalogue Item) payload from FOP API.
+        AC-002a-i: Stored as-is in JSONB (byte-for-byte match to TCG documentation, BR-003).
+        Extracted fields: catalogue_item_id (PK), nsl_alias (optional), supplier_code.
+      required:
+        - catalogueItemId
+        - payload
+      properties:
+        catalogueItemId:
+          type: string
+          description: |
+            Post-NSL universal product identifier (format: {18-digit-article}-{UOM}).
+            Primary key for wholesale products. BR-006: Catalogue Item is canonical key everywhere.
+          example: "000000000070005494-C00"
+        nslAlias:
+          type: string
+          nullable: true
+          description: |
+            National Stock Listing legacy ID (optional, transitional).
+            Indexed for reverse lookup during cutover. BR-006: NSL = alias only.
+          example: "0070005494"
+        supplierCode:
+          type: string
+          nullable: true
+          description: ANA supplier code (indexed for query performance).
+          example: "SUP001"
+        payload:
+          type: object
+          description: |
+            JSONB payload as returned by FOP API /api/v1/wholesale-products.
+            Conformance validated before storage (BR-003, AC-006).
+            Contains: cost prices array, supplier discount, unit conversion, pack spec, orderable status, restrictions (Z7, Z8).
+          additionalProperties: true
+        subscriberId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Subscriber (ISM society) for RLS isolation (BR-011). Cell auth verified at edge.
+
+    RetailProductPayload:
+      type: object
+      description: |
+        Retail Product payload from FOP API.
+        AC-001a-e: Pattern identical to WholesaleProductPayload.
+        Stored as-is in JSONB (consumer-facing details: EANs, packaging, hierarchy, restrictions, tax, effective-dated retail price).
+      required:
+        - productId
+        - payload
+      properties:
+        productId:
+          type: string
+          description: 18-digit Product ID from FOP API response.
+          example: "000000000070005494"
+        payload:
+          type: object
+          description: JSONB payload as returned by FOP API /api/v1/retail-products.
+          additionalProperties: true
+        subscriberId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Subscriber for RLS isolation (BR-011).
+
+    ConformanceValidationRequest:
+      type: object
+      description: |
+        Request to validate payload against FOP OAS 3.0 contract.
+        AC-006a-f: Checks JSON Schema, required fields, data types, value constraints.
+      required:
+        - entity
+        - payload
+      properties:
+        entity:
+          type: string
+          description: Entity type (retail_products, wholesale_products, edn, invoices, etc.).
+          example: "wholesale_products"
+        payload:
+          type: object
+          description: Payload to validate (may be malformed).
+          additionalProperties: true
+        conformanceRules:
+          type: string
+          description: |
+            Optional override: conformance rule set (e.g., 'fop-v1.3.1', 'fop-v1.0.0').
+            Default: use latest committed FOP OAS spec.
+          enum:
+            - fop-v1.3.1
+            - fop-v1.0.0
+
+    ConformanceValidationResponse:
+      type: object
+      description: Successful conformance validation result.
+      required:
+        - status
+        - entity
+      properties:
+        status:
+          type: string
+          enum:
+            - CONFORMS
+          description: Payload conforms to FOP contract.
+        entity:
+          type: string
+          description: Entity type validated.
+        validatedAt:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC timestamp of validation.
+        conformanceRuleSet:
+          type: string
+          description: Which FOP OAS version was used for validation.
+
+    ConformanceValidationFailure:
+      type: object
+      description: Conformance validation failure (payload quarantined, not discarded).
+      required:
+        - status
+        - failureId
+        - entity
+        - errorMessage
+      properties:
+        status:
+          type: string
+          enum:
+            - VALIDATION_FAILURE
+          description: Payload failed conformance validation.
+        failureId:
+          type: integer
+          format: int64
+          description: ops.validation_failures row ID (for reference/replay).
+        entity:
+          type: string
+          description: Entity type that failed.
+        errorMessage:
+          type: string
+          description: |
+            Human-readable validation error (e.g., "Missing required field: catalogueItemId").
+            AC-006b-d: Covers required fields, data types, value constraints.
+        validationErrorDetail:
+          type: object
+          description: |
+            Detailed error context: JSON Schema path, expected type, actual value, constraint violated.
+          additionalProperties: true
+        quarantinedAt:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC timestamp when payload was quarantined to ops.validation_failures.
+
+    LineageRecord:
+      type: object
+      description: |
+        Lineage record: track origin of persisted data.
+        AC-009a-f: "Where is my record?" answered by entity + key lookup.
+      required:
+        - entity
+        - key
+        - sourceType
+      properties:
+        entity:
+          type: string
+          description: Entity type (retail_products, wholesale_products, edn, invoices, etc.).
+          example: "wholesale_products"
+        key:
+          type: string
+          description: Business key (product_id, catalogue_item_id, delivery_reference, etc.).
+          example: "000000000070005494-C00"
+        sourceType:
+          type: string
+          enum:
+            - API
+            - FILE
+          description: Origin type (FOP API endpoint or SFTP file).
+        sourcePageOrLine:
+          type: string
+          description: |
+            For API: page number from paginated response.
+            For FILE: file_name + line_number (e.g., "EDN_2026-09-16.jsonl:1234").
+          example: "1"
+        manifestHash:
+          type: string
+          nullable: true
+          description: |
+            For FILE: SHA256 hash of manifest (file bytes).
+            For API: NULL.
+          example: "abc123def456..."
+        apiTimestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: |
+            For API: timestamp of API call (ISO 8601 UTC).
+            For FILE: NULL.
+        subscriberId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Subscriber for RLS isolation (BR-011).
+
+    LineageResponse:
+      type: object
+      description: Lineage record created response.
+      required:
+        - lineageId
+        - entity
+        - key
+      properties:
+        lineageId:
+          type: integer
+          format: int64
+          description: ops.lineage row ID (auto-generated).
+        entity:
+          type: string
+          description: Entity type recorded.
+        key:
+          type: string
+          description: Business key recorded.
+        recordedAt:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC timestamp when lineage was recorded.
+
+    LineageQueryResponse:
+      type: object
+      description: Lineage query result.
+      required:
+        - entity
+        - key
+        - lineageRecords
+      properties:
+        entity:
+          type: string
+          description: Entity queried.
+        key:
+          type: string
+          description: Key queried.
+        lineageRecords:
+          type: array
+          description: All lineage records for entity+key (ordered by recorded_at DESC).
+          items:
+            type: object
+            required:
+              - lineageId
+              - sourceType
+            properties:
+              lineageId:
+                type: integer
+                format: int64
+              sourceType:
+                type: string
+                enum:
+                  - API
+                  - FILE
+              sourcePageOrLine:
+                type: string
+              manifestHash:
+                type: string
+                nullable: true
+              apiTimestamp:
+                type: string
+                format: date-time
+                nullable: true
+              recordedAt:
+                type: string
+                format: date-time
+
+    WatermarkResponse:
+      type: object
+      description: Watermark current state (AC-007a).
+      required:
+        - entity
+        - lastSuccessfulPoll
+      properties:
+        entity:
+          type: string
+          description: Entity name.
+          example: "wholesale_products"
+        lastSuccessfulPoll:
+          type: string
+          format: date-time
+          description: |
+            ISO 8601 UTC timestamp of last successful upsert completion.
+            Used as 'since' parameter in next delta query (max 7 days back, BR-001).
+        lastApiTimestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO 8601 UTC timestamp of last API response (audit trail).
+        sevenDayGuardExceeded:
+          type: boolean
+          description: |
+            True if (now - lastSuccessfulPoll) > 7 days.
+            AC-007d: Triggers loud failure (alert + runbook reference) to prevent silent gaps.
+
+    WatermarkAdvanceRequest:
+      type: object
+      description: Advance watermark on successful upsert completion.
+      required:
+        - entity
+        - newWatermark
+      properties:
+        entity:
+          type: string
+          description: Entity name.
+          example: "wholesale_products"
+        newWatermark:
+          type: string
+          format: date-time
+          description: |
+            New watermark timestamp (ISO 8601 UTC).
+            AC-007b: Advance only after successful upsert completion.
+            AC-007c: Failed activities leave watermark unchanged; replay on next run.
+        lastApiTimestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last API response timestamp (for audit trail).
+
+    CanonicalStorageResponse:
+      type: object
+      description: Canonical data storage response (successful upsert).
+      required:
+        - status
+        - entity
+        - key
+      properties:
+        status:
+          type: string
+          enum:
+            - STORED
+            - UPDATED
+          description: STORED (new record) or UPDATED (existing record modified).
+        entity:
+          type: string
+          description: Entity type stored.
+        key:
+          type: string
+          description: Business key (primary key in canonical table).
+        storedAt:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC timestamp of storage.
+        lineageId:
+          type: integer
+          format: int64
+          nullable: true
+          description: ops.lineage row ID (if lineage was recorded alongside).
+
+    ValidationError:
+      type: object
+      description: Generic validation error response.
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message.
+        details:
+          type: array
+          nullable: true
+          description: Detailed validation errors.
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token (JWT) issued by platform's OAuth2 server.
+        Platform authenticates to FOP with client credentials + partnerId (config-driven, never hard-coded, FR-024 AC-005b).
+
+tags:
+  - name: Canonical Data
+    description: Master data ingestion and storage (wholesale products, retail products, etc.).
+  - name: Validation
+    description: Conformance validation against FOP contract (BR-003, AC-006).
+  - name: Lineage & Audit
+    description: Lineage tracking (FR-021, AC-009) and audit trails (FR-023).
+  - name: Watermark & Guard
+    description: Delta query watermark management and 7-day guard enforcement (FR-022, BR-001, AC-007).

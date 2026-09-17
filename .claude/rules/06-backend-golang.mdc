@@ -1,0 +1,16 @@
+---
+description: Backend Golang (agent-owned)
+globs: services/**/*.go
+alwaysApply: false
+---
+
+# Backend Golang
+
+- Selected when `config.yaml` → `implementation.backend.language: golang`.
+- Default stack: Go 1.21+, Echo/Gin/Chi per `docs/architecture/stack-conventions-golang-react.md`.
+- **Agent-owned implement:** no template render pipeline in kit DoD; `golang-agent` and its subagents write Go source directly.
+- Layering: handler → service → repository; centralized error handling; validation on inputs.
+- Persist OpenAPI/DTO alignment via api-agent contract sync during `/implement-api`.
+- Unit + integration tests required; coverage floor from `config.yaml` `quality_gates.api_unit_line_coverage_min` (parsed via `go-coverage-analyzer`).
+- Migrations are additive-only via `golang-migrate` (`go-migration-generator`); never edit an applied version.
+- No secrets in source; mask PII in logs.

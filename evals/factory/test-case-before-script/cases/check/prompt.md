@@ -1,0 +1,3 @@
+Read kit commands `/implement-api`, `/implement-ui`, `/expand-test-coverage`, `/run-tests`, `/apply-requirements`, `/fix-issue`, and `/close-eval-gaps` in `.claude/commands/`. Also test-agent, quality-agent, br-coverage-validator, and `test-cases-br-coverage-template.md`.
+
+Pass only if all twins require: designed cases in `docs/test-cases.md` in addition to `docs/test-matrix.md`; BR coverage scored only by br-coverage-validator; slice scripts and runners only after Status PASS; `/expand-test-coverage` does not generate or run gap scripts; `/run-tests` only after Status PASS and test-package Approved. Implementers must not write the coverage file.

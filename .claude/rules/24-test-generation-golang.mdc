@@ -1,0 +1,17 @@
+---
+description: Agent-owned Go test generation
+globs:
+  - "**/*_test.go"
+  - "**/docs/test-cases.md"
+alwaysApply: false
+---
+
+# Test Generation (Golang)
+
+- Selected when `config.yaml` → `implementation.backend.language: golang`. Sibling of `23-test-generation.mdc` (JUnit); does not apply to Java modules.
+- `go-test-generator` writes `*_test.go` directly (no template registry) — stdlib `testing` + `testify` assertions, table-driven where the cited cases share shape.
+- Stop on `# AMBIGUITY` — do not invent test structure or fixtures.
+- Test function names cite `docs/test-cases.md` case IDs (e.g. `TestCreateOrder_TC_106`). Forbidden non-deterministic calls in tests: bare `time.Now()`, `rand.Int()` without a fixed seed, unseeded UUID generation — inject clock/ID as a dependency instead.
+- Unit tests: service/repository layers, mocked dependencies (`testify/mock`). Integration tests: handlers against a real Postgres via the compose stack, using `test/fixtures/`.
+- `stack-conventions-golang-react.md` compliance --check test must PASS before DoD.
+- `/implement-api` writes slice test cases + BR coverage, then scripts, then runs tests (ASSUMPTION-PCC-002 — not blocked by expand PASS). `/expand-test-coverage` expands remaining FR/BR **design** only. Gap scripts for remaining FR/BR run on `/run-tests` after package **Approved**. There is no public `/generate-go-api-tests` command.

@@ -1,0 +1,1 @@
+PASS if loop + max 3 ceiling + early exit on iteration-1 Validate/Observe pass + Refine/Reflect only from findings + escalate with owners is present in all three twins. FAIL if unbounded, if Validate/Observe is optional, or if the contract requires burning unused iterations after a clean pass.

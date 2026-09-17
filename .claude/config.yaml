@@ -1,0 +1,86 @@
+# Copy to config.yaml and fill placeholders. No product-specific module names.
+
+project:
+  name: FRTS Ingress Platform
+  domain: Retail
+
+modules:
+  api: frts_api
+  ui: frts_ui
+  openapi: "contracts/openapi/<service>-v1.yaml"
+  python: "<python-module-root>"   # optional
+  infra: "infra/terraform"         # optional
+
+implementation:
+  backend:
+    language: golang                       # java | python | golang — selects backend-agent vs golang-agent
+    module_root: cmd/tcg-service/           # per frts-ingestion-s1 sprint plan Oracle Locations (§4)
+    framework: net/http + azidentity        # stdlib router; Azure AD (azidentity) for FOP OAuth2 client credentials
+
+intake:
+  transcripts: artifacts/intake/transcripts/
+  notes: artifacts/intake/
+  supporting_docs: artifacts/intake/supporting/
+  story_sources: docs/stories/
+
+brd_drafts: artifacts/brd/
+sprints: artifacts/sprints/
+story_packs: docs/sprint<N>/userstory/
+
+docs:
+  feature_notes: docs/feature.md
+  test_cases: docs/test-cases.md
+  test_cases_br_coverage: docs/test-cases-br-coverage.md
+  test_matrix: docs/test-matrix.md
+  architecture_proposals: docs/architecture/
+  adr: docs/architecture/
+  harness_progress: docs/harness/progress.md
+  harness_decisions: docs/harness/decisions.md
+
+artifacts:
+  audit: artifacts/audit/
+  application_summary_html: artifacts/application-summary.html
+  application_summary_pdf: artifacts/application-summary.pdf
+  test_results: artifacts/test-results-{date}.md
+  e2e_test_results: artifacts/e2e-test-results-{timestamp}.md
+  issue_logs: artifacts/issues/
+  diagrams: artifacts/diagrams/
+
+quality_gates:
+  api_unit_line_coverage_min: 0.70
+  api_unit_branch_coverage_target: 0.70
+  ui_coverage_min: 0.70
+  max_unwaived_high_cves: 0
+  template_render_check: optional   # Agent-owned Java per stack-conventions.md, or agent-owned Go per stack-conventions-golang-react.md, depending on implementation.backend.language
+
+execution:
+  max_iterations: 3
+
+pipeline:
+  brd_command: generate-brd
+  architecture_command: propose-architecture
+  plan_commands: [plan-sprint]
+  ui_design_command: generate-ui-design
+  execute: [implement-api, implement-ui, expand-test-coverage, run-tests, run-eval, close-eval-gaps, review-changes, application-summary]
+  eval_fix_command: close-eval-gaps
+
+local_stack:
+  api_health_url: "http://localhost:8080/actuator/health"  # Java (Spring actuator); Go stack typically exposes /api/v1/health — set per implementation.backend.language
+  ui_health_url: "http://localhost:3000"
+  start_script: "scripts/run-local-stack.sh"
+  verify_script: "scripts/verify-stack-health.sh"
+  stop_script: "scripts/stop-local-stack.sh"
+
+evals:
+  root: evals/product
+  rule_source: artifacts/brd/<module>-BRD.md   # or story pack path
+  rule_id_pattern: "(FR|BR|NFR|INT)-[0-9]+"
+  status: evals/product/STATUS.md
+  results: evals/product/results/
+  factory_root: evals/factory
+  test_commands:
+    api_java: "cd <api-module-root> && mvn test"
+    api_golang: "cd <api-module-root> && go test ./..."
+    api: "cd <api-module-root> && go test ./..."   # active command; mirrors implementation.backend.language (golang here)
+    ui: "cd <ui-module-root> && npm test"
+    e2e: "cd <ui-module-root> && npm run test:e2e"

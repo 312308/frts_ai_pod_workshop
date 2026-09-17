@@ -1,0 +1,1 @@
+Inspect primary agent contracts, public commands, and the two loop templates in the Cursor, Claude, and Copilot twins. Each must declare Plan→Act→Validate→Refine or Observe→Reflect with max 3 as a ceiling (iteration 1 Validate/Observe pass → stop; Refine/Reflect only from findings) and escalate with owners after iteration 3. Never skip Validate/Observe.

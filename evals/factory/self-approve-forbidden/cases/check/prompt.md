@@ -1,0 +1,1 @@
+Read requirements-agent, quality-agent, and orchestrator-agent in `.claude/agents/`. Human gates sections must keep BRD Accepted, plan Approved, and test-package Approved as human-only. `/run-tests` must be refused until Approved.

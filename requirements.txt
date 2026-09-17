@@ -1,0 +1,10 @@
+# Kit Python tooling (factory scripts only — not the Java/Next product stack).
+#
+# Install:
+#   pip install -r requirements.txt
+#   playwright install chromium   # required only for URL capture in /generate-ui-design
+#
+# scripts/intake-safety-scan.py — stdlib only (runs without pip install)
+# tools/design/capture-reference.py — optional Playwright for reference-site screenshots
+
+playwright>=1.40.0

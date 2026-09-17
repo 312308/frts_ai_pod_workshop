@@ -1,0 +1,1 @@
+PASS if every eval-agent twin and `evals/product/templates/completeness-ledger.md` require the ledger, always-on safety families, and “silence is a finding.” FAIL if incremental may drop L1-04/L1-05/L1-08/L1-09/L4-03, if a family with zero cases can be green, or if P0/P1 may be waived by eval-agent.

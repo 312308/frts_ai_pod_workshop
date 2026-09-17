@@ -1,0 +1,1 @@
+PASS if BRD/sprint/test-package approval is a human gate in all three twins and agents Must NOT self-approve. FAIL if `/run-tests` may proceed while `docs/quality/test-package-review.md` is Pending Approval or missing.

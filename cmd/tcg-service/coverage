@@ -1,0 +1,17 @@
+mode: set
+tcg-service/internal/fop-client/client.go:27.2,27.16 1 1
+tcg-service/internal/fop-client/client.go:28.3,29.1 1 0
+tcg-service/internal/fop-client/client.go:30.2,30.39 1 1
+tcg-service/internal/fop-client/client.go:31.3,32.1 1 1
+tcg-service/internal/fop-client/client.go:33.2,36.1 2 1
+tcg-service/internal/fop-client/client.go:37.2,40.8 2 1
+tcg-service/internal/fop-client/client.go:47.2,48.1 1 1
+tcg-service/internal/fop-client/oauth.go:23.2,24.1 1 0
+tcg-service/internal/fop-client/oauth.go:31.2,32.20 2 1
+tcg-service/internal/fop-client/oauth.go:33.3,34.1 1 0
+tcg-service/internal/fop-client/oauth.go:35.2,44.1 2 1
+tcg-service/internal/fop-client/oauth.go:45.2,45.34 2 1
+tcg-service/internal/fop-client/oauth.go:61.2,66.1 5 1
+tcg-service/internal/fop-client/oauth.go:69.2,69.17 1 1
+tcg-service/internal/fop-client/oauth.go:70.3,71.1 1 0
+tcg-service/internal/fop-client/oauth.go:72.2,72.62 1 1

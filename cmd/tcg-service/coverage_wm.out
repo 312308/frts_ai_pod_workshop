@@ -1,0 +1,18 @@
+mode: set
+tcg-service/internal/watermark/store.go:23.2,23.22 1 1
+tcg-service/internal/watermark/store.go:24.3,25.1 1 1
+tcg-service/internal/watermark/store.go:26.2,26.49 1 1
+tcg-service/internal/watermark/store.go:27.3,28.1 1 0
+tcg-service/internal/watermark/store.go:29.2,29.18 1 1
+tcg-service/internal/watermark/store.go:40.52,40.83 1 0
+tcg-service/internal/watermark/store.go:43.2,47.16 5 0
+tcg-service/internal/watermark/store.go:48.3,49.1 1 0
+tcg-service/internal/watermark/store.go:50.2,50.15 1 0
+tcg-service/internal/watermark/store.go:54.2,61.104 2 0
+tcg-service/internal/watermark/store.go:62.3,63.1 1 0
+tcg-service/internal/watermark/store.go:64.2,64.12 1 0
+tcg-service/internal/watermark/watermark.go:30.2,31.1 1 1
+tcg-service/internal/watermark/watermark.go:43.2,47.1 1 1
+tcg-service/internal/watermark/watermark.go:56.2,57.26 2 1
+tcg-service/internal/watermark/watermark.go:58.3,59.1 1 1
+tcg-service/internal/watermark/watermark.go:60.2,60.12 1 1

@@ -1,0 +1,1 @@
+For every public command in `.claude/commands/` (except README), Clarification Protocol must exist and must not be empty. After resolve-before-ask it must register remaining gaps as Open DQ (or refuse when a Required input / human gate is unmet). It must not require a blocking numbered clarification round (max 7).

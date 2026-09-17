@@ -1,0 +1,18 @@
+# oapi-codegen generation config for typed FOP operation clients.
+#
+# Not yet wired to `go generate` — SP-01 delivers only the authenticated
+# transport (oauth.go, client.go). Future stories that call real FOP
+# resource endpoints (SP-05 delta/pagination, SP-07 wholesale products,
+# SP-13 sales-order relay) generate typed request/response types from the
+# committed spec below and build on fopclient.Client.HTTPClient.
+#
+# Run (once a Go toolchain + oapi-codegen are available):
+#   go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen \
+#     -config cmd/tcg-service/internal/fop-client/oapi-codegen-config.yaml \
+#     contracts/fop/fop-oas-v0.4.0.json
+
+package: fopclient
+output: cmd/tcg-service/internal/fop-client/fop_types_gen.go
+generate:
+  models: true
+  client: true

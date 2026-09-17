@@ -1,0 +1,26 @@
+mode: set
+tcg-service/internal/lineage/lineage.go:43.2,50.1 1 1
+tcg-service/internal/lineage/lineage.go:55.2,64.1 1 1
+tcg-service/internal/lineage/lineage.go:77.2,77.20 1 1
+tcg-service/internal/lineage/lineage.go:78.3,79.1 1 0
+tcg-service/internal/lineage/lineage.go:80.2,80.23 1 1
+tcg-service/internal/lineage/lineage.go:81.3,82.1 1 1
+tcg-service/internal/lineage/lineage.go:83.2,85.23 3 1
+tcg-service/internal/lineage/lineage.go:86.3,87.1 1 1
+tcg-service/internal/lineage/lineage.go:88.2,88.25 1 1
+tcg-service/internal/lineage/lineage.go:89.3,90.1 1 1
+tcg-service/internal/lineage/lineage.go:91.2,91.12 1 1
+tcg-service/internal/lineage/store.go:23.52,23.83 1 0
+tcg-service/internal/lineage/store.go:26.2,26.39 1 0
+tcg-service/internal/lineage/store.go:27.3,28.1 1 0
+tcg-service/internal/lineage/store.go:29.2,36.16 3 0
+tcg-service/internal/lineage/store.go:37.3,38.1 1 0
+tcg-service/internal/lineage/store.go:39.2,39.12 1 0
+tcg-service/internal/lineage/store.go:44.2,51.16 3 0
+tcg-service/internal/lineage/store.go:52.3,53.1 1 0
+tcg-service/internal/lineage/store.go:54.2,55.1 3 0
+tcg-service/internal/lineage/store.go:56.2,57.18 3 0
+tcg-service/internal/lineage/store.go:58.3,60.89 2 0
+tcg-service/internal/lineage/store.go:61.4,62.1 1 0
+tcg-service/internal/lineage/store.go:63.3,63.23 1 0
+tcg-service/internal/lineage/store.go:65.2,65.24 1 0
